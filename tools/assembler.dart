@@ -65,6 +65,8 @@ main(List<String> args) {
     print('Usage: dart assembler.dart [input] [output]');
     return;
   }
+  var labels = <String, int>{};
+  var pc = 0;
   var output = File(args[1]).openSync(mode: FileMode.write);
   File(args[0])
       .openRead()
@@ -72,35 +74,44 @@ main(List<String> args) {
       .transform(LineSplitter())
       .forEach((line) {
     if (line.length == 0) return;
-    int i = 0;
+    var i = 0;
     while (line[i] == '\t' || line[i] == ' ') i++;
-    int j = i;
+    final j = i;
     while (i < line.length && line[i] != '\t' && line[i] != ' ') i++;
-    String instruction = line.substring(j, i);
-    for (var insn in lut.keys)
-      if (insn == instruction) output.writeByteSync(lut[insn]);
-    if ([
-      'svc',
-      'ldr',
-      'ldg',
-      'ldb',
-      'ldx',
-      'ldy',
-      'str',
-      'stg',
-      'stb',
-      'stx',
-      'sty',
-      'jmp',
-      'jsr',
-      'beq',
-      'bne',
-      'bof',
-      'bno',
-      'bmi',
-      'bpl',
-    ].contains(instruction)) {
-      //TODO: parse number or label
+    final instruction = line.substring(j, i);
+    while (line[i] == '\t' || line[i] == ' ') i++;
+    if (line[i] == ':') {
+      labels[instruction] = pc;
+    } else {
+      for (final insn in lut.keys) {
+        if (insn == instruction) {
+          output.writeByteSync(lut[insn]);
+          pc++;
+        }
+      }
+      if ([
+        'svc',
+        'ldr',
+        'ldg',
+        'ldb',
+        'ldx',
+        'ldy',
+        'str',
+        'stg',
+        'stb',
+        'stx',
+        'sty',
+        'jmp',
+        'jsr',
+        'beq',
+        'bne',
+        'bof',
+        'bno',
+        'bmi',
+        'bpl',
+      ].contains(instruction)) {
+        //TODO: parse number or label
+      }
     }
   });
 }
