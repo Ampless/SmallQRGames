@@ -60,6 +60,13 @@ const lut = {
   'pxl': 0xff, //sets pixel at (x, y) to (r, g, b)
 };
 
+write32(RandomAccessFile output, int i) {
+  output.writeByteSync(i >> 24);
+  output.writeByteSync(i >> 16);
+  output.writeByteSync(i >> 8);
+  output.writeByteSync(i);
+}
+
 main(List<String> args) {
   if (args.length < 2) {
     print('Usage: dart assembler.dart [input] [output]');
@@ -110,7 +117,13 @@ main(List<String> args) {
         'bmi',
         'bpl',
       ].contains(instruction)) {
-        //TODO: parse number or label
+        if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+            .contains(line[i])) {
+          write32(output, labels[line.substring(i)]);
+          pc += 4;
+        } else {
+          //TODO: parse number
+        }
       }
     }
   });
