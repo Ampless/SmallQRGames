@@ -122,7 +122,8 @@ main(List<String> args) {
           write32(output, labels[line.substring(i)]);
           pc += 4;
         } else {
-          //TODO: parse number
+          write32(output, int.parse(line.substring(i)));
+          pc += 4;
         }
       }
     }
