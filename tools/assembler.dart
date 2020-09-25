@@ -82,12 +82,12 @@ main(List<String> args) {
       .forEach((line) {
     if (line.length == 0) return;
     var i = 0;
-    while (line[i] == '\t' || line[i] == ' ') i++;
+    while (i < line.length && (line[i] == '\t' || line[i] == ' ')) i++;
     final j = i;
     while (i < line.length && line[i] != '\t' && line[i] != ' ') i++;
     final instruction = line.substring(j, i);
-    while (line[i] == '\t' || line[i] == ' ') i++;
-    if (line[i] == ':') {
+    while (i < line.length && (line[i] == '\t' || line[i] == ' ')) i++;
+    if (i < line.length && line[i] == ':') {
       labels[instruction] = pc;
     } else {
       for (final insn in lut.keys) {
@@ -119,6 +119,7 @@ main(List<String> args) {
       ].contains(instruction)) {
         if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
             .contains(line[i])) {
+          //TODO: this breaks, when the label is parsed later
           write32(output, labels[line.substring(i)]);
           pc += 4;
         } else {
