@@ -1,8 +1,8 @@
 ldr 255
 ldg 255
 ldb 255
-ldx 0
-ldy 0
+zrx
+zry
 
 loop:
     pxl

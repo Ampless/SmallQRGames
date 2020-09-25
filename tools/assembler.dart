@@ -67,19 +67,36 @@ write32(RandomAccessFile output, int i) {
   output.writeByteSync(i);
 }
 
-main(List<String> args) {
+main(List<String> args) async {
   if (args.length < 2) {
     print('Usage: dart assembler.dart [input] [output]');
     return;
   }
   var labels = <String, int>{};
   var pc = 0;
-  var output = File(args[1]).openSync(mode: FileMode.write);
-  File(args[0])
+  final output = File(args[1]).openSync(mode: FileMode.write);
+  final input = await File(args[0])
       .openRead()
       .map(utf8.decode)
       .transform(LineSplitter())
-      .forEach((line) {
+      .toList();
+
+  input.forEach((line) {
+    if (line.length == 0) return;
+    var i = 0;
+    while (i < line.length && (line[i] == '\t' || line[i] == ' ')) i++;
+    final j = i;
+    while (i < line.length &&
+        line[i] != '\t' &&
+        line[i] != ' ' &&
+        line[i] != ':') i++;
+    final label = line.substring(j, i);
+    while (i < line.length && (line[i] == '\t' || line[i] == ' ')) i++;
+    if (i < line.length && line[i] == ':') {
+      labels[label] = pc;
+    }
+  });
+  input.forEach((line) {
     if (line.length == 0) return;
     var i = 0;
     while (i < line.length && (line[i] == '\t' || line[i] == ' ')) i++;
@@ -87,9 +104,7 @@ main(List<String> args) {
     while (i < line.length && line[i] != '\t' && line[i] != ' ') i++;
     final instruction = line.substring(j, i);
     while (i < line.length && (line[i] == '\t' || line[i] == ' ')) i++;
-    if (i < line.length && line[i] == ':') {
-      labels[instruction] = pc;
-    } else {
+    if (i >= line.length || line[i] != ':') {
       for (final insn in lut.keys) {
         if (insn == instruction) {
           output.writeByteSync(lut[insn]);
@@ -119,7 +134,6 @@ main(List<String> args) {
       ].contains(instruction)) {
         if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
             .contains(line[i])) {
-          //TODO: this breaks, when the label is parsed later
           write32(output, labels[line.substring(i)]);
           pc += 4;
         } else {
