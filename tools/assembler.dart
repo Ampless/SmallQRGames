@@ -60,6 +60,13 @@ const lut = {
   'pxl': 0xff, //sets pixel at (x, y) to (r, g, b)
 };
 
+class Token {
+  bool isLabel;
+  int opcodeOrData;
+  String label;
+  Token(this.isLabel, this.opcodeOrData, this.label);
+}
+
 write32(RandomAccessFile output, int i) {
   output.writeByteSync(i >> 24);
   output.writeByteSync(i >> 16);
@@ -72,6 +79,7 @@ main(List<String> args) async {
     print('Usage: dart assembler.dart [input] [output]');
     return;
   }
+  var tokens = <Token>[];
   var labels = <String, int>{};
   var pc = 0;
   final output = File(args[1]).openSync(mode: FileMode.write);
@@ -90,24 +98,14 @@ main(List<String> args) async {
         line[i] != '\t' &&
         line[i] != ' ' &&
         line[i] != ':') i++;
-    final label = line.substring(j, i);
-    while (i < line.length && (line[i] == '\t' || line[i] == ' ')) i++;
-    if (i < line.length && line[i] == ':') {
-      labels[label] = pc;
-    }
-  });
-  input.forEach((line) {
-    if (line.length == 0) return;
-    var i = 0;
-    while (i < line.length && (line[i] == '\t' || line[i] == ' ')) i++;
-    final j = i;
-    while (i < line.length && line[i] != '\t' && line[i] != ' ') i++;
     final instruction = line.substring(j, i);
     while (i < line.length && (line[i] == '\t' || line[i] == ' ')) i++;
-    if (i >= line.length || line[i] != ':') {
+    if (i < line.length && line[i] == ':') {
+      labels[instruction] = pc;
+    } else {
       for (final insn in lut.keys) {
         if (insn == instruction) {
-          output.writeByteSync(lut[insn]);
+          tokens.add(Token(false, lut[insn], null));
           pc++;
         }
       }
@@ -134,7 +132,7 @@ main(List<String> args) async {
       ].contains(instruction)) {
         if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
             .contains(line[i])) {
-          write32(output, labels[line.substring(i)]);
+          write32(tokens, labels[line.substring(i)]);
           pc += 4;
         } else {
           write32(output, int.parse(line.substring(i)));
